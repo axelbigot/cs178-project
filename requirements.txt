@@ -1,2 +1,4 @@
 pandas
 ucimlrepo
+matplotlib
+seaborn
