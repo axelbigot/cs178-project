@@ -1,5 +1,12 @@
+"""
+Various functions used to explain & visualize the dataset.
+Written as unittests for easy GUI execution in pycharm.
+"""
+
+
 import unittest
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
@@ -53,13 +60,27 @@ Missing values:
 
         sns.set(style = "whitegrid")
 
-        X.hist(figsize = (12, 10), bins = 30, edgecolor = "black")
-        plt.suptitle("Distributions of Numerical Features", fontsize = 16)
+        # Apply a logarithmic transformation for features with positive skewness
+        transformed_X = X.copy()
+
+        # List of features to transform (you can adjust based on the skewness you observe)
+        skewed_features = ['capital-gain', 'capital-loss', 'fnlwgt']
+
+        # Apply log transformation to skewed features
+        for feature in skewed_features:
+            transformed_X[feature] = transformed_X[feature].apply(
+                lambda x: np.log(x + 1) if x > 0 else 0)
+
+        # Plot histograms of transformed features
+        transformed_X.hist(figsize = (12, 10), bins = 30, edgecolor = "black")
+        plt.suptitle("Transformed Distributions of Numerical Features", fontsize = 16)
         plt.show()
 
-        plt.figure(figsize = (12, 6))
-        sns.boxplot(data = X[["age", "fnlwgt", "education-num", "capital-gain", "capital-loss", "hours-per-week"]])
-        plt.title("Boxplot of Numerical Features")
+        # Plot boxplots of selected numerical features (log-transformed ones included)
+        plt.figure(figsize = (12, 10))
+        sns.boxplot(data = transformed_X[
+            ["age", "fnlwgt", "education-num", "capital-gain", "capital-loss", "hours-per-week"]])
+        plt.title("Boxplot of Transformed Numerical Features")
         plt.xticks(rotation = 45)
         plt.show()
 
@@ -72,7 +93,7 @@ Missing values:
 
         plt.figure(figsize = (15, 12))
 
-        for i, col in enumerate(["workclass", "education", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]):
+        for i, col in enumerate(["workclass", "education", "marital-status", "occupation", "relationship", "race", "sex"]):
             plt.subplot(4, 2, i + 1)
             sns.countplot(y = X[col], order = X[col].value_counts().index, palette = "viridis")
             plt.title(f"Distribution of {col}")
@@ -150,7 +171,7 @@ Missing values:
         # Ensure y is a Series by selecting a column if needed
         y_series = y.iloc[:, 0]  # Select the first column if y is a DataFrame
 
-        plt.figure(figsize = (8, 12))
+        plt.figure(figsize = (8, 4))
         sns.countplot(data = pd.DataFrame({"income": y_series}), y = "income", palette = "coolwarm")
         plt.title("Income Class Distribution")
         plt.xlabel("Count")
