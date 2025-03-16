@@ -2,6 +2,8 @@
 from ucimlrepo import fetch_ucirepo
 
 from src.preprocess import impute_missing_values, normalize_target_classes
+from src.train import neural_net
+from src.validate import rank_models
 
 
 # fetch dataset
@@ -14,4 +16,5 @@ y = normalize_target_classes(adult.data.targets)
 impute_missing_values(X)
 
 if __name__ == '__main__':
-    pass
+    model = neural_net(X, y)[0]
+    rank_models([model], X, y)
