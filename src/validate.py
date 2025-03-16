@@ -6,7 +6,7 @@ from typing import Callable
 from train import * # Training functions.
 
 
-def cross_validate(model: Callable, X, y):
+def cross_validate(model, X, y):
     """
     Performs cross-validation on a model.
 
@@ -19,7 +19,7 @@ def cross_validate(model: Callable, X, y):
     """
     pass
 
-def rank_models(models: list[Callable], X, y):
+def rank_models(models, X, y):
     """
     Ranks training models by accuracy. Prints out as a table with the model name, parameters, and
     accuracy score along with any other relevant info.
