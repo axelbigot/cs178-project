@@ -209,38 +209,44 @@ Missing values:
         Computes and visualizes the mutual information between features and income.
         This helps in understanding which features provide the most predictive power for classification.
         """
-        # Convert y to binary labels
+
         df = X.copy()
         df["income"] = y.replace({">50K": 1, "<=50K": 0})  # Convert to binary labels
 
-        # Initialize OneHotEncoder and fit_transform the categorical columns
+        # Encoding categorical columns using OneHotEncoder
+        categorical_cols = X.select_dtypes(include = ["object"]).columns
         encoder = OneHotEncoder(sparse_output = False,
-                                drop = 'first')  # Drop first to avoid collinearity
-        categorical_columns = X.select_dtypes(include = ['object']).columns
-        X_encoded = encoder.fit_transform(X[categorical_columns])
+                                drop = "first")  # Use sparse_output instead of sparse
+        encoded_features = encoder.fit_transform(X[categorical_cols])
 
-        # Combine the encoded categorical features back with the rest of the numerical features
-        X_encoded_df = pd.DataFrame(X_encoded,
-                                    columns = encoder.get_feature_names_out(categorical_columns))
-        X_final = pd.concat([X.drop(columns = categorical_columns), X_encoded_df], axis = 1)
+        # Convert encoded features back to a DataFrame
+        encoded_df = pd.DataFrame(encoded_features,
+                                  columns = encoder.get_feature_names_out(categorical_cols))
+
+        # Concatenate the encoded features with the numeric columns
+        X_encoded = pd.concat([X.select_dtypes(exclude = ["object"]), encoded_df], axis = 1)
 
         # Compute mutual information
-        mi_scores = mutual_info_classif(X_final, df["income"], discrete_features = "auto")
-        mi_series = pd.Series(mi_scores, index = X_final.columns).sort_values(ascending = False)
+        mi_scores = mutual_info_classif(X_encoded, df["income"], discrete_features = "auto")
+        mi_series = pd.Series(mi_scores, index = X_encoded.columns).sort_values(ascending = False)
 
-        # Select top 20 features
-        top_20_features = mi_series.head(20)
+        # Limit to top 20 most important features
+        mi_series_top_20 = mi_series.head(20)
 
-        # Create the plot
-        plt.figure(figsize = (10, 5))
+        # Visualize top 20 feature importance
+        plt.figure(figsize = (12, 8))  # Increased figure size for better readability
+        sns.barplot(x = mi_series_top_20, y = mi_series_top_20.index, palette = "coolwarm")
 
-        # Use seaborn's barplot to create the plot
-        sns.barplot(x = top_20_features, y = top_20_features.index,
-                    palette = 'coolwarm')  # Modify palette if you want specific colors
+        # Increase font size for better readability
+        plt.title("Top 20 Feature Importance via Mutual Information", fontsize = 16)
+        plt.xlabel("Mutual Information Score", fontsize = 14)
+        plt.ylabel("Feature", fontsize = 14)
 
-        # Title and labels
-        plt.title("Top 20 Features via Mutual Information (Colored by Target)")
-        plt.xlabel("Mutual Information Score")
-        plt.ylabel("Feature")
+        # Rotate y-axis labels for better readability
+        plt.yticks(rotation = 0, fontsize = 12)  # Adjust rotation and font size
+
+        # Adjust spacing to avoid label overlap
+        plt.tight_layout()
+
+        # Show the plot
         plt.show()
-
