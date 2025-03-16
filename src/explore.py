@@ -1,7 +1,9 @@
 import unittest
 import matplotlib.pyplot as plt
 import seaborn as sns
-import textwrap
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.feature_selection import mutual_info_classif
 
 from main import X, y, adult
 
@@ -81,18 +83,15 @@ Missing values:
 
     def test_visualize_income_correlation(self):
         """
-        Visualizes the correlation between income and other features in the dataset.
-        This includes displaying:
-        - Age distribution by income class using a histogram
-        - Distribution of categorical features (e.g., education, marital-status) by income class using countplots
+        Visualizes the correlation between income and numerical and categorical features in the dataset.
+        This includes:
+        - Histograms for all numerical features, separated by income class
+        - Countplots for categorical features, showing income distribution
         """
 
         # Combine X and y into a single DataFrame for easier plotting
         df = X.copy()
         df['income'] = y
-
-        # Remove trailing dots and strip leading/trailing spaces from 'income' column
-        df['income'] = df['income'].str.replace(r'\.$', '', regex=True).str.strip()
 
         # Ensure 'income' column is of string type (if not already)
         df['income'] = df['income'].astype(str)
@@ -100,10 +99,18 @@ Missing values:
         # Define a custom color palette for income (adjust to match cleaned labels)
         income_palette = {"<=50K": "darkblue", ">50K": "lightblue"}
 
-        # Plot age distribution by income class
-        plt.figure(figsize=(8, 6))
-        sns.histplot(data=df, x="age", bins=30, kde=True, hue="income", element="step", palette=income_palette)
-        plt.title("Age Distribution by Income Class")
+        # Plot all numerical variables by income class
+        numerical_features = ["age", "fnlwgt", "education-num", "capital-gain", "capital-loss",
+                              "hours-per-week"]
+
+        plt.figure(figsize = (12, 12))
+        for i, col in enumerate(numerical_features):
+            plt.subplot(3, 2, i + 1)
+            sns.histplot(data = df, x = col, bins = 30, kde = True, hue = "income",
+                         element = "step", palette = income_palette)
+            plt.title(f"{col.replace('-', ' ').title()} Distribution by Income Class")
+
+        plt.tight_layout()
         plt.show()
 
         # Plot categorical feature distribution by income class
@@ -134,3 +141,106 @@ Missing values:
         sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f")
         plt.title("Feature Correlation Heatmap")
         plt.show()
+
+    def test_income_class_distribution(self):
+        """
+        Visualizes the distribution of income classes in the dataset.
+        This helps identify any imbalance in the dataset that may impact model performance.
+        """
+        # Ensure y is a Series by selecting a column if needed
+        y_series = y.iloc[:, 0]  # Select the first column if y is a DataFrame
+
+        plt.figure(figsize = (8, 12))
+        sns.countplot(data = pd.DataFrame({"income": y_series}), y = "income", palette = "coolwarm")
+        plt.title("Income Class Distribution")
+        plt.xlabel("Count")
+        plt.ylabel("Income Class")
+        plt.show()
+
+    def test_boxplots_by_income(self):
+        """
+        Displays boxplots of numerical features grouped by income class.
+        This helps identify outliers and how numerical distributions differ between income levels.
+        """
+
+        df = X.copy()
+        df["income"] = y
+
+        numerical_features = ["age", "fnlwgt", "education-num", "capital-gain", "capital-loss",
+                              "hours-per-week"]
+
+        plt.figure(figsize = (15, 10))
+        for i, col in enumerate(numerical_features):
+            plt.subplot(3, 2, i + 1)
+            sns.boxplot(data = df, x = "income", y = col, palette = "coolwarm")
+            plt.title(f"{col.replace('-', ' ').title()} by Income Class")
+
+        plt.tight_layout()
+        plt.show()
+
+    def test_capital_gain_loss_distribution(self):
+        """
+        Visualizes the distribution of capital-gain and capital-loss on a log scale.
+        This highlights the skewed nature of these features and the presence of extreme values.
+        """
+
+        df = X.copy()
+        df["income"] = y
+
+        plt.figure(figsize = (12, 5))
+
+        # Capital Gain
+        plt.subplot(1, 2, 1)
+        sns.histplot(df[df["capital-gain"] > 0]["capital-gain"], bins = 30, kde = True,
+                     log_scale = True)
+        plt.title("Capital Gain Distribution (Log Scale)")
+
+        # Capital Loss
+        plt.subplot(1, 2, 2)
+        sns.histplot(df[df["capital-loss"] > 0]["capital-loss"], bins = 30, kde = True,
+                     log_scale = True)
+        plt.title("Capital Loss Distribution (Log Scale)")
+
+        plt.tight_layout()
+        plt.show()
+
+    def test_mutual_information(self):
+        """
+        Computes and visualizes the mutual information between features and income.
+        This helps in understanding which features provide the most predictive power for classification.
+        """
+        # Convert y to binary labels
+        df = X.copy()
+        df["income"] = y.replace({">50K": 1, "<=50K": 0})  # Convert to binary labels
+
+        # Initialize OneHotEncoder and fit_transform the categorical columns
+        encoder = OneHotEncoder(sparse_output = False,
+                                drop = 'first')  # Drop first to avoid collinearity
+        categorical_columns = X.select_dtypes(include = ['object']).columns
+        X_encoded = encoder.fit_transform(X[categorical_columns])
+
+        # Combine the encoded categorical features back with the rest of the numerical features
+        X_encoded_df = pd.DataFrame(X_encoded,
+                                    columns = encoder.get_feature_names_out(categorical_columns))
+        X_final = pd.concat([X.drop(columns = categorical_columns), X_encoded_df], axis = 1)
+
+        # Compute mutual information
+        mi_scores = mutual_info_classif(X_final, df["income"], discrete_features = "auto")
+        mi_series = pd.Series(mi_scores, index = X_final.columns).sort_values(ascending = False)
+
+        # Select top 20 features
+        top_20_features = mi_series.head(20)
+
+        # Create the plot
+        plt.figure(figsize = (10, 5))
+
+        # Use seaborn's barplot to create the plot
+        sns.barplot(x = top_20_features, y = top_20_features.index,
+                    palette = 'coolwarm')  # Modify palette if you want specific colors
+
+        # Title and labels
+        plt.title("Top 20 Features via Mutual Information (Colored by Target)")
+        plt.xlabel("Mutual Information Score")
+        plt.ylabel("Feature")
+        plt.show()
+

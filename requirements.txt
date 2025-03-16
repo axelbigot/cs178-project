@@ -2,3 +2,4 @@ pandas
 ucimlrepo
 matplotlib
 seaborn
+scikit-learn
