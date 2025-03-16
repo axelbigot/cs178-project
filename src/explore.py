@@ -339,3 +339,38 @@ Variable Information:
 
         # Show the plot
         plt.show()
+
+    def test_features_to_features(self):
+        """
+        Visualizes the relationship between all features.
+        Categorical vs Categorical is represented with a count plot
+        Numerical vs Categorical is represented with a box plot
+        Numerical vs Numerical is represented with a correlation heat map
+        """
+        df = X.copy()
+
+        categorical_features = df.select_dtypes(include=['object', 'category']).columns
+        numerical_features = df.select_dtypes(include=['float64', 'int64']).columns
+
+        # Categorical vs Numerical comparisons
+        for cat in categorical_features:
+            for num in numerical_features:
+                plt.figure(figsize=(6, 4))
+                sns.boxplot(x=cat, y=num, data=df)
+                plt.title(f'Box Plot: {cat} vs {num}')
+                plt.show()
+
+        # Correlation Matrix for Numerical Features
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(df[numerical_features].corr(), annot=True, cmap='coolwarm')
+        plt.title('Correlation Matrix for Numerical Features')
+        plt.show()
+
+        # Categorical vs Categorical comparisons
+        for cat1 in categorical_features:
+            for cat2 in categorical_features:
+                if cat1 != cat2:
+                    plt.figure(figsize=(6, 4))
+                    sns.countplot(x=cat1, hue=cat2, data=df)
+                    plt.title(f'Count Plot: {cat1} vs {cat2}')
+                    plt.show()
