@@ -35,19 +35,29 @@ Variable Information:
         """
         Prints a summary of the dataset, including:
         - The first few rows of the dataset
-        - The count of each unique value in the target variable
+        - The count and percentage of each unique value in the target variable
+        - The total number of data points (rows)
         - The count of missing values in the feature set
         """
 
+        total_rows = len(X)
+        y_counts = y.value_counts()
+        y_percentages = (y_counts / total_rows) * 100
+
         print(f"""
-Summary of dataset:
-{X.head()}
+    Summary of dataset:
+    {X.head()}
 
-Target variable: 
-{y.value_counts()}
+    Total data points: {total_rows}
 
-Missing values: 
-{X.isnull().sum()}
+    Target variable distribution: 
+    {y_counts}
+
+    Percentage of each class:
+    {y_percentages}
+
+    Missing values: 
+    {X.isnull().sum()}
         """)
 
     def test_visualize_numerical(self):
@@ -147,6 +157,54 @@ Missing values:
         plt.tight_layout()
         plt.show()
 
+    def test_visualize_capital_distributions(self):
+        """
+        Visualizes the distribution of capital-gain and capital-loss, separated by income class.
+        This includes:
+        - Histograms in linear scale (including zeros)
+        - Histograms in log scale (excluding zeros)
+        """
+
+        # Combine X and y into a single DataFrame for easier plotting
+        df = X.copy()
+        df["income"] = y.astype(str)  # Ensure 'income' is a string for hue mapping
+
+        # Define a custom color palette for income classes
+        income_palette = {"<=50K": "darkblue", ">50K": "lightblue"}
+
+        plt.figure(figsize = (12, 10))
+
+        # Capital Gain (Linear Scale) - Keep all values
+        plt.subplot(2, 2, 1)
+        sns.histplot(data = df, x = "capital-gain", bins = 30, kde = False, hue = "income",
+                     element = "step", palette = income_palette)
+        plt.title("Capital Gain Distribution (Linear Scale)")
+
+        # Capital Loss (Linear Scale) - Keep all values
+        plt.subplot(2, 2, 2)
+        sns.histplot(data = df, x = "capital-loss", bins = 30, kde = False, hue = "income",
+                     element = "step", palette = income_palette)
+        plt.title("Capital Loss Distribution (Linear Scale)")
+
+        # Capital Gain (Log Scale) - Remove zeros
+        plt.subplot(2, 2, 3)
+        sns.histplot(data = df[df["capital-gain"] > 0],
+                     x = np.log(df[df["capital-gain"] > 0]["capital-gain"]),
+                     bins = 30, kde = True, hue = "income", element = "step",
+                     palette = income_palette)
+        plt.title("Capital Gain Distribution (Log Scale, No Zeros)")
+
+        # Capital Loss (Log Scale) - Remove zeros
+        plt.subplot(2, 2, 4)
+        sns.histplot(data = df[df["capital-loss"] > 0],
+                     x = np.log(df[df["capital-loss"] > 0]["capital-loss"]),
+                     bins = 30, kde = True, hue = "income", element = "step",
+                     palette = income_palette)
+        plt.title("Capital Loss Distribution (Log Scale, No Zeros)")
+
+        plt.tight_layout()
+        plt.show()
+
     def test_visualize_numerical_correlations(self):
         """
         Visualizes the correlations between numerical features in the dataset.
@@ -201,23 +259,33 @@ Missing values:
 
     def test_capital_gain_loss_distribution(self):
         """
-        Visualizes the distribution of capital-gain and capital-loss on a log scale.
+        Visualizes the distribution of capital-gain and capital-loss on both linear and log scales.
         This highlights the skewed nature of these features and the presence of extreme values.
         """
 
         df = X.copy()
         df["income"] = y
 
-        plt.figure(figsize = (12, 5))
+        plt.figure(figsize = (12, 10))
 
-        # Capital Gain
-        plt.subplot(1, 2, 1)
+        # Capital Gain (Linear Scale)
+        plt.subplot(2, 2, 1)
+        sns.histplot(df[df["capital-gain"] > 0]["capital-gain"], bins = 30, kde = True)
+        plt.title("Capital Gain Distribution (Linear Scale)")
+
+        # Capital Loss (Linear Scale)
+        plt.subplot(2, 2, 2)
+        sns.histplot(df[df["capital-loss"] > 0]["capital-loss"], bins = 30, kde = True)
+        plt.title("Capital Loss Distribution (Linear Scale)")
+
+        # Capital Gain (Log Scale)
+        plt.subplot(2, 2, 3)
         sns.histplot(df[df["capital-gain"] > 0]["capital-gain"], bins = 30, kde = True,
                      log_scale = True)
         plt.title("Capital Gain Distribution (Log Scale)")
 
-        # Capital Loss
-        plt.subplot(1, 2, 2)
+        # Capital Loss (Log Scale)
+        plt.subplot(2, 2, 4)
         sns.histplot(df[df["capital-loss"] > 0]["capital-loss"], bins = 30, kde = True,
                      log_scale = True)
         plt.title("Capital Loss Distribution (Log Scale)")
