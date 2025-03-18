@@ -6,6 +6,7 @@ All validation and evaluation goes in validate.py
 """
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
+from catboost import CatBoostClassifier
 from preprocess import preprocess_neural_net
 
 
@@ -80,6 +81,7 @@ def svc_linear(X, y):
     X, y = preprocess_neural_net(X, y)
     model = SVC(
         random_state = _SEED,
+        max_iter = 200,
         kernel = 'linear'
     )
 
@@ -89,6 +91,8 @@ def svc_poly(X, y):
     X, y = preprocess_neural_net(X, y)
     model = SVC(
         random_state = _SEED,
+        max_iter=200,
+
         kernel = 'poly'
     )
 
@@ -98,8 +102,19 @@ def svc_sigmoid(X, y):
     X, y = preprocess_neural_net(X, y)
     model = SVC(
         random_state = _SEED,
+        max_iter=200,
+
         kernel = 'sigmoid'
     )
 
     return model.fit(X, y)
 
+def catboost(X, y):
+    categorical_features = ['workclass', 'marital-status', 'occupation', 'relationship', 'race', 'sex', 'native-country']
+    model = CatBoostClassifier(
+        iterations = 200,
+        verbose = False
+    )
+    model.fit(X, y, categorical_features)
+
+    return model
