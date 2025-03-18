@@ -4,7 +4,9 @@ Training models go here
 Accept X, y as parameters to be called in main.
 All validation and evaluation goes in validate.py
 """
+from scipy.stats import alpha
 from sklearn.neural_network import MLPClassifier
+from preprocess import preprocess
 from sklearn.svm import SVC
 from catboost import CatBoostClassifier
 from preprocess import preprocess_neural_net
@@ -21,9 +23,6 @@ def _neural_net(X, y, **kwargs):
     :param params: Parameters.
     :return: Trained scikit-learn MLP model.
     """
-    # Preprocess the data
-    X, y = preprocess_neural_net(X, y)
-
     # Define MLP classifier
     model = MLPClassifier(
         **kwargs,
@@ -68,8 +67,21 @@ def single_layer_nn_sgd(X, y):
         solver='sgd'
     )
 
+def mass_layer_nn(X, y):
+    return _neural_net(
+        X, y,
+        max_iter=10,
+        hidden_layer_sizes=(256, 128, 64, 32),
+    )
+
+def alpha_nn(X, y):
+    return _neural_net(
+        X, y,
+        max_iter=10,
+        alpha=0.01
+    )
+
 def svc_rbf(X, y):
-    X, y = preprocess_neural_net(X, y)
     model = SVC(
         random_state = _SEED,
         kernel = 'rbf'
@@ -78,7 +90,6 @@ def svc_rbf(X, y):
     return model.fit(X, y)
 
 def svc_linear(X, y):
-    X, y = preprocess_neural_net(X, y)
     model = SVC(
         random_state = _SEED,
         max_iter = 200,
@@ -88,7 +99,6 @@ def svc_linear(X, y):
     return model.fit(X, y)
 
 def svc_poly(X, y):
-    X, y = preprocess_neural_net(X, y)
     model = SVC(
         random_state = _SEED,
         max_iter=200,
@@ -99,11 +109,9 @@ def svc_poly(X, y):
     return model.fit(X, y)
 
 def svc_sigmoid(X, y):
-    X, y = preprocess_neural_net(X, y)
     model = SVC(
         random_state = _SEED,
         max_iter=200,
-
         kernel = 'sigmoid'
     )
 
