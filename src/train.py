@@ -7,6 +7,7 @@ All validation and evaluation goes in validate.py
 from scipy.stats import alpha
 from sklearn.neural_network import MLPClassifier
 from preprocess import preprocess
+from sklearn.svm import SVC
 
 
 _SEED = 1234
@@ -77,3 +78,36 @@ def alpha_nn(X, y):
         max_iter=10,
         alpha=0.01
     )
+
+def svc_rbf(X, y):
+    model = SVC(
+        random_state = _SEED,
+        kernel = 'rbf'
+    )
+
+    return model.fit(X, y)
+
+def svc_linear(X, y):
+    model = SVC(
+        random_state = _SEED,
+        kernel = 'linear'
+    )
+
+    return model.fit(X, y)
+
+def svc_poly(X, y):
+    model = SVC(
+        random_state = _SEED,
+        kernel = 'poly'
+    )
+
+    return model.fit(X, y)
+
+def svc_sigmoid(X, y):
+    model = SVC(
+        random_state = _SEED,
+        kernel = 'sigmoid'
+    )
+
+    return model.fit(X, y)
+
