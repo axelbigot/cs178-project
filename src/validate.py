@@ -24,8 +24,6 @@ def cross_validate(
     :param scoring: Scoring metric to evaluate the model (default is 'accuracy').
     :return: Mean and standard deviation of the cross-validation scores.
     """
-    X, y = preprocess_neural_net(X, y)
-
     # Perform cross-validation
     scores = cross_val_score(model, X, y, cv = cv, scoring = scoring)
 
@@ -56,7 +54,7 @@ def rank_models(models: list[Callable[..., BaseEstimator]], X, y, *, incl_params
         ))
 
     # Sort performances by accuracy in ascending order
-    performances_sorted = sorted(performances, key=lambda x: x[2])
+    performances_sorted = sorted(performances, key=lambda x: -x[2])
 
     # Print out performances as a table
     print(f"{'CV Accuracy':<15} {'CV Accuracy Std':<20} {'Model':<30} {'Model Class':<20}"

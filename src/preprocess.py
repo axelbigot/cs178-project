@@ -12,37 +12,28 @@ def impute_missing_values(X):
 def normalize_target_classes(y):
     return y.map(lambda v: v.rstrip('.'))
 
-def preprocess_neural_net(X, y):
+def preprocess(X, y):
     """
-    Preprocess the data: impute missing values, encode categorical variables, and standardize features.
+    Preprocess the data: impute missing values, encode categorical variables, and standardize numerical features.
     """
-    # Identify categorical columns
-    categorical_cols = X.select_dtypes(include = ['object']).columns.tolist()
+    # Identify categorical and numerical columns
+    categorical_cols = X.select_dtypes(include=['object']).columns.tolist()
+    num_cols = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
 
-    # Impute missing values
+    # Impute missing values separately for categorical and numerical data
     impute_missing_values(X)
 
-    # One-Hot Encode categorical columns
+    # One-hot encode categorical columns
     if categorical_cols:
-        encoder = OneHotEncoder(sparse_output = False, drop = 'first', handle_unknown = 'ignore')
-        X_encoded = encoder.fit_transform(X[categorical_cols])
-        X_encoded_df = pd.DataFrame(X_encoded,
-                                    columns = encoder.get_feature_names_out(categorical_cols),
-                                    index = X.index)
+        X = pd.get_dummies(X, columns=categorical_cols, drop_first=True)
 
-        # Drop original categorical columns and add encoded ones
-        X = X.drop(columns = categorical_cols)
-        X = pd.concat([X, X_encoded_df], axis = 1)
-
-    # Standardize numerical features
+    # Standardize numerical features only
     scaler = StandardScaler()
-    X = pd.DataFrame(scaler.fit_transform(X), columns = X.columns, index = X.index)
+    X[num_cols] = scaler.fit_transform(X[num_cols])
 
     # Encode target variable
-    y = y.iloc[:, 0] if isinstance(y, pd.DataFrame) else y
+    y = y.iloc[:, 0]
     if y.dtype == 'object':
-        y = y.str.rstrip('.')
-        le = LabelEncoder()
-        y = le.fit_transform(y)
+        y = LabelEncoder().fit_transform(y.str.rstrip('.'))
 
-    return X.astype(np.float64), np.array(y)  # Ensure all X values are float64
+    return X.astype(np.float64), np.array(y)

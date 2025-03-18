@@ -4,8 +4,9 @@ Training models go here
 Accept X, y as parameters to be called in main.
 All validation and evaluation goes in validate.py
 """
+from scipy.stats import alpha
 from sklearn.neural_network import MLPClassifier
-from preprocess import preprocess_neural_net
+from preprocess import preprocess
 
 
 _SEED = 1234
@@ -19,9 +20,6 @@ def _neural_net(X, y, **kwargs):
     :param params: Parameters.
     :return: Trained scikit-learn MLP model.
     """
-    # Preprocess the data
-    X, y = preprocess_neural_net(X, y)
-
     # Define MLP classifier
     model = MLPClassifier(
         **kwargs,
@@ -64,4 +62,18 @@ def single_layer_nn_sgd(X, y):
         X, y,
         max_iter=10,
         solver='sgd'
+    )
+
+def mass_layer_nn(X, y):
+    return _neural_net(
+        X, y,
+        max_iter=10,
+        hidden_layer_sizes=(256, 128, 64, 32),
+    )
+
+def alpha_nn(X, y):
+    return _neural_net(
+        X, y,
+        max_iter=10,
+        alpha=0.01
     )
