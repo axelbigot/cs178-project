@@ -5,6 +5,7 @@ Accept X, y as parameters to be called in main.
 All validation and evaluation goes in validate.py
 """
 from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
 from preprocess import preprocess_neural_net
 
 
@@ -65,3 +66,40 @@ def single_layer_nn_sgd(X, y):
         max_iter=10,
         solver='sgd'
     )
+
+def svc_rbf(X, y):
+    X, y = preprocess_neural_net(X, y)
+    model = SVC(
+        random_state = _SEED,
+        kernel = 'rbf'
+    )
+
+    return model.fit(X, y)
+
+def svc_linear(X, y):
+    X, y = preprocess_neural_net(X, y)
+    model = SVC(
+        random_state = _SEED,
+        kernel = 'linear'
+    )
+
+    return model.fit(X, y)
+
+def svc_poly(X, y):
+    X, y = preprocess_neural_net(X, y)
+    model = SVC(
+        random_state = _SEED,
+        kernel = 'poly'
+    )
+
+    return model.fit(X, y)
+
+def svc_sigmoid(X, y):
+    X, y = preprocess_neural_net(X, y)
+    model = SVC(
+        random_state = _SEED,
+        kernel = 'sigmoid'
+    )
+
+    return model.fit(X, y)
+
